@@ -18,6 +18,11 @@ INFR_COND - ?,
 INFR_PEAT - ?,
 DENUNCIAS - Anzeigen
 
+Steps:
+
+* check whether 'output/' and 'sourcedata/' exist. if not create them
+* check if data file exists in 'output/' if not download
+
 Questions/Ideas
 
 * interpolate or extrapolate position with Lugar and Altura
