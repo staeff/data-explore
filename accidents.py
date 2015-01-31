@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 """
 Explorative data analysis of DB_ACC_2014.csv - DESCRIPTION of the Data here.
@@ -78,6 +79,7 @@ def create_counters(key, datafile):
     counter = Counter(item[key] for item in datafile)
     return counter
 
+# currently not used
 def get_dates(datafile):
     """ Do something with the dates
         Figuring out which weekday a certain day was is another step.
@@ -94,6 +96,7 @@ def get_dates(datafile):
     dates = Counter(item["FECHA"] for item in data)
     return dates
 
+# currently not used
 def get_places(datafile):
     """ Which is the place with the most accidents.
 
@@ -138,14 +141,16 @@ def visualize_days(data_file):
     plt.clf()
 
 
-def visualize_type(data_file):
+def visualize_values(counter, name):
     """Visualize data by category in a bar graph"""
 
-    # That looks easy - I should try that out in the shell
-    counter = Counter(item["Category"] for item in data_file)
-
     # Set the labels which are based on the keys of our counter.
-    labels = tuple(counter.keys())
+    # labels needed to be utf-8 decoded, otherwise plt.xticks
+    # broke with unicode-decode-error
+    # tuple instead of list for performance?
+    labels = tuple([i.decode('utf-8') for i in counter.keys()])
+
+    fullpath_outfile = "output/{0}.png".format(name)
 
     # Set where the labels hit the x-axis
     xlocations = np.arange(len(labels)) + 0.5
@@ -155,6 +160,8 @@ def visualize_type(data_file):
 
     # Assign data to a bar plot
     plt.bar(xlocations, counter.values(), width=width)
+
+    #import ipdb; ipdb.set_trace()
 
     # Assign labels and tick location to x- and y-axis
     plt.xticks(xlocations + width / 2, labels, rotation=90)
@@ -167,71 +174,17 @@ def visualize_type(data_file):
     plt.rcParams['figure.figsize'] = 12, 8
 
     # Save the graph!
-    plt.savefig("Type.png")
+    plt.savefig(fullpath_outfile)
 
     # Close figure
     plt.clf()
-
-
-def create_map(data_file):
-    """Creates a GeoJSON file.
-
-    Returns a GeoJSON file that can be rendered in a GitHub
-    Gist at gist.github.com.  Just copy the output file and
-    paste into a new Gist, then create either a public or
-    private gist.  GitHub will automatically render the GeoJSON
-    file as a map.
-    """
-
-    # Define type of GeoJSON we're creating
-    geo_map = {"type": "FeatureCollection"}
-
-    # Define empty list to collect each point to graph
-    item_list = []
-
-    # Iterate over our data to create GeoJSOn document.
-    # We're using enumerate() so we get the line, as well
-    # the index, which is the line number.
-    for index, line in enumerate(data_file):
-
-        # Skip any zero coordinates as this will throw off
-        # our map.
-        if line['X'] == "0" or line['Y'] == "0":
-            continue
-
-        # Setup a new dictionary for each iteration.
-        data = {}
-
-        # Assigne line items to appropriate GeoJSON fields.
-        data['type'] = 'Feature'
-        data['id'] = index
-        data['properties'] = {'title': line['Category'],
-                              'description': line['Descript'],
-                              'date': line['Date']}
-        data['geometry'] = {'type': 'Point',
-                            'coordinates': (line['X'], line['Y'])}
-
-        # Add data dictionary to our item_list
-        item_list.append(data)
-
-    # For each point in our item_list, we add the point to our
-    # dictionary.  setdefault creates a key called 'features' that
-    # has a value type of an empty list.  With each iteration, we
-    # are appending our point to that list.
-    for point in item_list:
-        geo_map.setdefault('features', []).append(point)
-
-    # Now that all data is parsed in GeoJSON write to a file so we
-    # can upload it to gist.github.com
-    with open('file_sf.geojson', 'w') as f:
-        f.write(geojson.dumps(geo_map))
 
 
 def main():
     arg_parser = argparse.ArgumentParser()
     # example call:
     # > python accidents.py --csvfile file.csv
-    arg_parser.add_argument('--csvfile',
+    arg_parser.add_argument('--csvfile', '-f',
                             help="Parses the given CSV/Excel file. The full\
                             path to the file is needed.",
                             type=str, required=True)
@@ -239,6 +192,7 @@ def main():
                             help="Delimiter of the Input File",
                             type=str, default=",")
     # Returns a dictionary of keys = argument flag, and value = argument
+
     args = vars(arg_parser.parse_args())
 
     # Parse data
@@ -246,9 +200,14 @@ def main():
 
     # how do i dynamically create variable names? Maybe this is solved, because
     # i am not assigning to variables, but create dataobject.
+    # dataobject as variable name sucks, because its totally nondescriptive
     dataobject = {}
-    for i in data[0].keys():
-        dataobject[i.lower()] = create_counters(i, data)
+    keys = data[0].keys()
+
+    for i in keys:
+        lower_case_category_name = i.lower()
+        dataobject[lower_case_category_name] = create_counters(i, data)
+        visualize_values(dataobject[lower_case_category_name], lower_case_category_name)
 
     return dataobject
 
