@@ -4,6 +4,8 @@
 """
 Explorative data analysis of DB_ACC_2014.csv - DESCRIPTION of the Data here.
 
+Usage: python explore-data.py -f sourcedata/DB_VEH_2014.csv
+
 Fields in Data:
 DILIG,
 LUGAR - Ort,

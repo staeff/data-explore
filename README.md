@@ -1,5 +1,17 @@
 # Exploration of open data
 
+## Usage
+
+```bash
+python explore-data.py -f file.csv
+```
+
+Example
+
+```bash
+python explore-data.py -f sourcedata/DB_VEH_2014.csv
+```
+
 These scripts were written to explore some of the datasets published at
 http://datosabiertos.laspalmasgc.es/
 
