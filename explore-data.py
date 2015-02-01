@@ -20,22 +20,28 @@ DENUNCIAS - Anzeigen
 
 Steps:
 
-* check whether 'output/' and 'sourcedata/' exist. if not create them
-* check if data file exists in 'output/' if not download
+* create subfolders in 'output' for results of different data sets
+* create requirements.txt for easy install of new packages. (create new
+virtual environment and see whats not working)
 
 Questions/Ideas
 
-* interpolate or extrapolate position with Lugar and Altura
-* transform date fecha into weekdays, years, months
-* determine oldest and youngest entry to show what time is covered
-* load file from web, so it does not have to be in the repo and I don't have
-to worry about licenses.
-* group time value by hours and/or daytime
 * sanity check data (I already have seen some spelling errors.) There are
 probably different spellings of the same street.
 
+### explore the data
 
+* look at the diagrams for easy analysises
 
+### processing of location
+
+* Try to turn street names into location data. Use an API? Is there one?
+
+### processing of Dates
+
+* transform date fecha into weekdays, years, months - date parsing with python
+* determine oldest and youngest entry to show what time is covered
+* group time value by hours and/or daytime
 
 """
 
@@ -43,10 +49,9 @@ from collections import Counter # http://pymotw.com/2/collections/counter.html
 
 import argparse # http://pymotw.com/2/argparse/index.html#module-argparse
 import csv      # http://pymotw.com/2/csv/index.html#module-csv
-import geojson
+import os
 import matplotlib.pyplot as plt
 import numpy as np
-
 
 def load_data(raw_file, delimiter):
     """Parses a raw CSV file to a JSON-like object"""
@@ -84,68 +89,6 @@ def create_counters(key, datafile):
     counter = Counter(item[key] for item in datafile)
     return counter
 
-# currently not used
-def get_dates(datafile):
-    """ Do something with the dates
-        Figuring out which weekday a certain day was is another step.
-        with that information, its possible to do the same analysis as
-        the original, i.e. show accidents by weekday
-
-        * accidents per month
-        * accidents per year
-        * accidents per weekday
-     """
-
-    # counter can be accessed like a dictionary
-    # ie. counter["05/12/2014"]
-    dates = Counter(item["FECHA"] for item in data)
-    return dates
-
-# currently not used
-def get_places(datafile):
-    """ Which is the place with the most accidents.
-
-    """
-
-    # counter can be accessed like a dictionary
-    places = Counter(item["LUGAR"] for item in data)
-    return places
-
-def visualize_days(data_file):
-    """Visualize data by day of week"""
-
-    # Returns a dict where it sums the total values for each key.
-    # In this case, the keys are the DaysOfWeek, and the values are
-    # a count of incidents.
-    counter = Counter(item["DayOfWeek"] for item in data_file)
-
-    # Separate out the counter to order it correctly when plotting.
-    data_list = [counter["Monday"],
-                 counter["Tuesday"],
-                 counter["Wednesday"],
-                 counter["Thursday"],
-                 counter["Friday"],
-                 counter["Saturday"],
-                 counter["Sunday"]
-                 ]
-
-    # Why?
-    day_tuple = tuple(["Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun"])
-    # Why not day_tuple = tuple("Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun")
-
-    # Assign the data to a plot
-    plt.plot(data_list)
-
-    # Assign labels to the plot
-    plt.xticks(range(len(day_tuple)), day_tuple)
-
-    # Save the graph!
-    plt.savefig("Days.png")
-
-    # Close figure
-    plt.clf()
-
-
 def visualize_values(counter, name):
     """Visualize data by category in a bar graph"""
 
@@ -155,7 +98,12 @@ def visualize_values(counter, name):
     # tuple instead of list for performance?
     labels = tuple([i.decode('utf-8') for i in counter.keys()])
 
-    fullpath_outfile = "output/{0}.png".format(name)
+    outfolder = 'output'
+
+    if not os.path.exists(outfolder):
+        os.mkdir(outfolder)
+
+    fullpath_outfile = "{0}/{1}.png".format(outfolder, name)
 
     # Set where the labels hit the x-axis
     xlocations = np.arange(len(labels)) + 0.5
